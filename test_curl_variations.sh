@@ -1,7 +1,7 @@
 #!/bin/zsh
 # Test script for all generation endpoints with streaming and non-streaming, valid, partial, and invalid data
 
-BASE_URL="http://localhost:8000/api"
+BASE_URL="http://localhost:8001/api"
 AUTH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZjllNWM0ZC0zOTVkLTRmNTUtODBjMy0zM2MzY2IzZTYzNzgiLCJmaXJzdF9uYW1lIjoiUm9oaXQiLCJsYXN0X25hbWUiOiJTaW5naCBSYXdhdCIsInVzZXJuYW1lIjoicm9oaXRfc2luZ2hyYXdhdCIsInByb2ZpbGVfcGljIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS1M1XzJ5STItU1hpWlUxZ3pCUTExbldHMnVTbmlDVzRhajNKX1IyaUtfTzgxaERvSE49czk2LWMiLCJwcmltYXJ5X3VzZXJfdHlwZSI6Ik1FTlRFRSIsImVtYWlsVmVyaWZpZWQiOm51bGwsImlhdCI6MTc0Nzc0NjU4OH0.w0UMXLNpa2F9gPOk2_AIqIjrvsYCR8hX3cNHyGljYhQ"
 
 run_curl() {
@@ -20,10 +20,10 @@ run_curl() {
 }
 
 # 1. generate-summary
-run_curl "/generate-summary" '{"jobDescription":"Python dev","targetPosition":"Backend","company":"Acme","fullName":"Alice","rawSummary":"Fast learner","rawDescription":["Knows Django","REST APIs"]}' false "Summary: All fields, non-streaming"
-run_curl "/generate-summary" '{"jobDescription":"Python dev","targetPosition":"Backend","company":"Acme"}' true "Summary: Only required, streaming"
+run_curl "/generate-summary" '{"jobDescription":"Python dev","targetPosition":"Backend","targetCompany":"Acme","fullName":"Alice","rawSummary":"Fast learner","rawDescription":["Knows Django","REST APIs"]}' false "Summary: All fields, non-streaming"
+run_curl "/generate-summary" '{"jobDescription":"Python dev","targetPosition":"Backend","targetCompany":"Acme"}' true "Summary: Only required, streaming"
 run_curl "/generate-summary" '{}' false "Summary: No data, non-streaming (should fail)"
-run_curl "/generate-summary" '{"jobDescription":123,"targetPosition":[],"company":null}' false "Summary: Wrong types, non-streaming (should fail)"
+run_curl "/generate-summary" '{"jobDescription":123,"targetPosition":[],"targetCompany":null}' false "Summary: Wrong types, non-streaming (should fail)"
 
 # 2. generate-education
 run_curl "/generate-education" '{"institution":"MIT","degree":"BS","fieldOfStudy":"CS","location":"Cambridge","startDate":"2015","endDate":"2019","current":false,"gpa":"4.0","jobDescription":"Backend dev","rawDescription":["AI courses"],"achievements":["Summa Cum Laude"]}' false "Education: All fields, non-streaming"

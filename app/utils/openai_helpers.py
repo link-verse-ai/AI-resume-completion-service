@@ -22,15 +22,43 @@ client = AsyncOpenAI(api_key=api_key)
 async def handle_openai_completion(messages: List[Dict], tools: List[Dict], stream: bool, tool_name: str):
     if stream:
         async def stream_response():
-            stream = await client.chat.completions.create(
+            import asyncio
+            
+            # Make a single non-streaming API call
+            response = await client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
                 tools=tools,
                 tool_choice="auto",
-                stream=True
+                stream=False
             )
-            async for chunk in stream:
-                yield f"data: {json.dumps(chunk.choices[0].delta if chunk.choices else {})}\n\n"
+            
+            # Log request + token usage for streaming calls
+            print(f"\n[REQUEST → {tool_name}] (STREAMING)\n" +
+                  f"{json.dumps(messages, indent=2)}\n" +
+                  f"[TOKENS USED] total={response.usage.total_tokens if response.usage else 'N/A'}\n")
+            
+            # Track tokens for the complete response
+            if response.usage:
+                add_tokens(response.usage.total_tokens)
+            # 3) extract the JSON blob from the function call
+            tc = next((tc for tc in response.choices[0].message.tool_calls
+                    if tc.function.name == tool_name), None)
+            if not tc:
+                yield "data: [ERROR]\n\n"
+                return
+            full_args = tc.function.arguments  # this is your full JSON string
+
+            # 4) split into words and stream them
+            words = full_args.split()
+            for w in words:
+                # each SSE frame is just the word, JSON-encoded
+                yield f"data: {json.dumps(w)}\n\n"
+                await asyncio.sleep(0.02)
+
+            # 5) signal done
+            yield "data: [DONE]\n\n"
+
         return StreamingResponse(stream_response(), media_type="text/event-stream")
     else:
         try:
@@ -41,6 +69,12 @@ async def handle_openai_completion(messages: List[Dict], tools: List[Dict], stre
                 tool_choice="auto",
                 stream=False
             )
+            
+            # Log request + token usage for non-streaming calls
+            print(f"\n[REQUEST → {tool_name}] (NON-STREAMING)\n" +
+                  f"{json.dumps(messages, indent=2)}\n" +
+                  f"[TOKENS USED] total={response.usage.total_tokens if response.usage else 'N/A'}\n")
+            
             if response.usage:
                 add_tokens(response.usage.total_tokens)
             if response.choices and response.choices[0].message.tool_calls:
