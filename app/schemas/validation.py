@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class SummaryInput(BaseModel):
-    jobDescription: str
+    jobDescription: Optional[str] = None
     targetPosition: str
     targetCompany: str
     fullName: Optional[str] = None
@@ -18,7 +18,7 @@ class EducationInput(BaseModel):
     endDate: Optional[str] = None
     current: Optional[bool] = None
     gpa: Optional[str] = None
-    jobDescription: str
+    jobDescription: Optional[str] = None
     rawDescription: Optional[List[str]] = None
     achievements: Optional[List[str]] = None
 
@@ -30,7 +30,7 @@ class ExperienceInput(BaseModel):
     endDate: Optional[str] = None
     current: Optional[bool] = None
     technologies: Optional[List[str]] = None
-    jobDescription: str
+    jobDescription: Optional[str] = None
     rawDescription: Optional[List[str]] = None
     achievements: Optional[List[str]] = None
 
@@ -44,7 +44,7 @@ class ProjectInput(BaseModel):
     ongoing: Optional[bool] = None
     # achievements (impact metrics, e.g. “reduced load times by 30%”)
     achievements: Optional[List[str]] = None
-    jobDescription: str
+    jobDescription: Optional[str] = None
     rawDescription: Optional[List[str]] = None
     technologies: Optional[List[str]] = None
 
@@ -54,7 +54,7 @@ class CertificationInput(BaseModel):
     expirationDate: Optional[str] = None
     credentialUrl: Optional[str] = None
     certificationName: str
-    jobDescription: str
+    jobDescription: Optional[str] = None
     rawDescription: Optional[str] = None
 
 
@@ -65,5 +65,5 @@ class PublicationInput(BaseModel):
     publicationDate: Optional[str] = None
     authors: Optional[List[str]] = None
     url: Optional[str] = None
-    jobDescription: str
+    jobDescription: Optional[str] = None
     rawDescription: Optional[str] = None
