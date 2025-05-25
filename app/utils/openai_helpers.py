@@ -41,22 +41,43 @@ async def handle_openai_completion(messages: List[Dict], tools: List[Dict], stre
             # Track tokens for the complete response
             if response.usage:
                 add_tokens(response.usage.total_tokens)
-            # 3) extract the JSON blob from the function call
+            
+            # Extract the tool call
             tc = next((tc for tc in response.choices[0].message.tool_calls
-                    if tc.function.name == tool_name), None)
+                      if tc.function.name == tool_name), None)
             if not tc:
                 yield "data: [ERROR]\n\n"
                 return
-            full_args = tc.function.arguments  # this is your full JSON string
-
-            # 4) split into words and stream them
-            words = full_args.split()
-            for w in words:
-                # each SSE frame is just the word, JSON-encoded
-                yield f"data: {json.dumps(w)}\n\n"
-                await asyncio.sleep(0.02)
-
-            # 5) signal done
+            
+            # Parse the JSON arguments
+            try:
+                args = json.loads(tc.function.arguments)
+                description = args.get("description")
+                if description is None:
+                    yield "data: [ERROR] No description found in response\n\n"
+                    return
+            except json.JSONDecodeError:
+                yield "data: [ERROR] Invalid JSON in tool call arguments\n\n"
+                return
+            
+            # Handle streaming based on description type
+            if isinstance(description, str):
+                # For single-string output (e.g., summary)
+                words = description.split()
+                for word in words:
+                    yield f"data: {json.dumps(word)}\n\n"
+                    await asyncio.sleep(0.02)
+            elif isinstance(description, list):
+                # For array output (e.g., education)
+                for item in description:
+                    # Stream each bullet point as a whole (or split into words if desired)
+                    yield f"data: {json.dumps(item)}\n\n"
+                    await asyncio.sleep(0.02)
+            else:
+                yield "data: [ERROR] Unsupported description format\n\n"
+                return
+            
+            # Signal completion
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(stream_response(), media_type="text/event-stream")
