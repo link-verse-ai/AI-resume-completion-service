@@ -68,3 +68,13 @@ instance/
 
 # Logs
 *.log
+
+# Docker and AWS deployment artifacts
+.docker/
+*.tar
+docker-compose.override.yml
+.aws/
+
+# Deployment specific
+deployment_logs/
+*.pem
